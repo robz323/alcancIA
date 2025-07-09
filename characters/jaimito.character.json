@@ -1,7 +1,7 @@
 {
     "name": "DonJaimito",
-    "plugins": [],
-    "clients": [],
+    "plugins": ["@elizaos/plugin-starknet"],
+    "clients": ["direct"],
     "modelProvider": "anthropic",
     "settings": {
       "secrets": {},

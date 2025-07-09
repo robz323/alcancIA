@@ -4,6 +4,8 @@ import transfer from "./actions/transfer";
 import { deployToken } from "./actions/unruggable";
 import transferSubdomain from "./actions/subdomain";
 import createWalletAction from "./actions/createWallet";
+import createInvisibleWalletAction from "./actions/createInvisibleWallet";
+import recoverWalletAction from "./actions/recoverWallet";
 
 export const PROVIDER_CONFIG = {
     AVNU_API: "https://starknet.impulse.avnu.fi/v1",
@@ -23,7 +25,15 @@ export const PROVIDER_CONFIG = {
 export const starknetPlugin: Plugin = {
     name: "starknet",
     description: "Starknet Plugin for Eliza",
-    actions: [transfer, executeSwap, deployToken, transferSubdomain, createWalletAction],
+    actions: [
+        // createWalletAction, // Temporalmente desactivado por error en ChipiPay SDK
+        createInvisibleWalletAction, 
+        recoverWalletAction, 
+        transfer, 
+        executeSwap, 
+        deployToken, 
+        transferSubdomain
+    ],
     evaluators: [],
     providers: [],
 };

@@ -448,81 +448,41 @@ export class DirectClient {
                     template,
                 });
 
-                function createHyperfiOutSchema(
-                    nearby: string[],
-                    availableEmotes: string[]
-                ) {
-                    const lookAtSchema =
-                        nearby.length > 1
-                            ? z
-                                  .union(
-                                      nearby.map((item) => z.literal(item)) as [
-                                          z.ZodLiteral<string>,
-                                          z.ZodLiteral<string>,
-                                          ...z.ZodLiteral<string>[],
-                                      ]
-                                  )
-                                  .nullable()
-                            : nearby.length === 1
-                              ? z.literal(nearby[0]).nullable()
-                              : z.null(); // Fallback for empty array
-
-                    const emoteSchema =
-                        availableEmotes.length > 1
-                            ? z
-                                  .union(
-                                      availableEmotes.map((item) =>
-                                          z.literal(item)
-                                      ) as [
-                                          z.ZodLiteral<string>,
-                                          z.ZodLiteral<string>,
-                                          ...z.ZodLiteral<string>[],
-                                      ]
-                                  )
-                                  .nullable()
-                            : availableEmotes.length === 1
-                              ? z.literal(availableEmotes[0]).nullable()
-                              : z.null(); // Fallback for empty array
-
-                    return z.object({
-                        lookAt: lookAtSchema,
-                        emote: emoteSchema,
+                const hyperfiSchema = z.object({
+                    lookAt: z.string().nullable(),
+                    emote: z.string().nullable(),
                         say: z.string().nullable(),
-                        actions: z.array(z.string()).nullable(),
-                    });
-                }
-
-                // Define the schema for the expected output
-                const hyperfiOutSchema = createHyperfiOutSchema(
-                    nearby,
-                    availableEmotes
-                );
+                    actions: z.array(z.string()).nullable()
+                }).strict()
 
                 // Call LLM
                 const response = await generateObject({
                     runtime,
                     context,
-                    modelClass: ModelClass.SMALL, // 1s processing time on openai small
-                    schema: hyperfiOutSchema,
-                });
+                    modelClass: ModelClass.SMALL,
+                    schema: hyperfiSchema as any // Temporal type assertion
+                })
 
                 if (!response) {
-                    res.status(500).send(
-                        "No response from generateMessageResponse"
-                    );
-                    return;
+                    res.status(500).send("No response from generateMessageResponse")
+                    return
                 }
 
-                let hfOut;
+                let hfOut
                 try {
-                    hfOut = hyperfiOutSchema.parse(response.object);
-                } catch {
-                    elizaLogger.error(
-                        "cant serialize response",
-                        response.object
-                    );
-                    res.status(500).send("Error in LLM response, try again");
-                    return;
+                    const parsed = hyperfiSchema.parse(response.object)
+                    // Validación manual después del parse
+                    if (parsed.lookAt && !nearby.includes(parsed.lookAt)) {
+                        throw new Error("Invalid lookAt value")
+                    }
+                    if (parsed.emote && !availableEmotes.includes(parsed.emote)) {
+                        throw new Error("Invalid emote value")
+                    }
+                    hfOut = parsed
+                } catch (error) {
+                    elizaLogger.error("cant serialize response", response.object)
+                    res.status(500).send("Error in LLM response, try again")
+                    return
                 }
 
                 // do this in the background
