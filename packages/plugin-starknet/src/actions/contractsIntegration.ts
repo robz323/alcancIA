@@ -143,8 +143,3 @@ export class YieldManagerContract {
   }
 }
 
-// ===================== Suggestions =====================
-// - You can extend these classes to add error handling, logging, or custom hooks for your agent.
-// - Consider adding type definitions for method arguments/returns for better DX.
-// - You can add a factory or registry to manage multiple contract addresses/environments.
-// - For agent integration, import these classes and instantiate with the correct address/provider/account.
