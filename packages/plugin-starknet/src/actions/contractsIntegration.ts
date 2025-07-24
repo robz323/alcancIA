@@ -1,7 +1,11 @@
 import { Contract, Provider, Account } from "starknet";
-import groupSavingsAbi from "../../ABIs/groupsavings_groupsavings.contract_class.json";
-import individualSavingsAbi from "../../ABIs/groupsavings_individualsavings.contract_class.json";
-import yieldManagerAbi from "../../ABIs/groupsavings_yieldmanager.contract_class.json";
+import groupSavingsAbiRaw from "../../ABIs/groupsavings_groupsavings.contract_class.json";
+import individualSavingsAbiRaw from "../../ABIs/groupsavings_individualsavings.contract_class.json";
+import yieldManagerAbiRaw from "../../ABIs/groupsavings_yieldmanager.contract_class.json";
+
+const groupSavingsAbi = groupSavingsAbiRaw.abi || groupSavingsAbiRaw;
+const individualSavingsAbi = individualSavingsAbiRaw.abi || individualSavingsAbiRaw;
+const yieldManagerAbi = yieldManagerAbiRaw.abi || yieldManagerAbiRaw;
 
 function getContract(abi: any, address: string, provider: Provider | Account) {
   return new Contract(abi, address, provider);
