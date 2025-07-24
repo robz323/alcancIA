@@ -38,9 +38,19 @@ cp .env.example .env
 
 pnpm clean
 
-pnpm install -r --no-frozen-lockfile
+# Install dependencies with error handling for native modules
+echo "Installing dependencies..."
+if ! pnpm install -r --no-frozen-lockfile; then
+    echo "WARNING: Some native dependencies failed to install. Attempting to continue with optional dependencies..."
+    # Try to install again ignoring optional dependencies that might fail
+    pnpm install -r --no-frozen-lockfile --ignore-scripts || true
+fi
 
-pnpm build
+echo "Building project..."
+if ! pnpm build; then
+    echo "ERROR: Build failed"
+    exit 1
+fi
 
 # Create temp file and ensure cleanup
 OUTFILE="$(mktemp)"

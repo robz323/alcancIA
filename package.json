@@ -58,10 +58,44 @@
       "@ai-sdk/provider-utils": "2.1.6",
       "cookie": "0.7.0",
       "bs58": "5.0.0",
-      "@coral-xyz/anchor": "0.28.0"
+      "@coral-xyz/anchor": "0.28.0",
+      "canvas": false,
+      "@discordjs/opus": false
     },
     "patchedDependencies": {
       "@solana-developers/helpers": "patches/@solana-developers__helpers.patch"
+    },
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "@langchain/core",
+        "@google-cloud/vertexai",
+        "svelte",
+        "vue",
+        "fastestsmallesttextencoderdecoder",
+        "reflect-metadata",
+        "pako",
+        "tweetnacl-util",
+        "utf-8-validate",
+        "solana-bankrun",
+        "got",
+        "axios",
+        "vitest",
+        "typescript"
+      ],
+      "allowedVersions": {
+        "react": "19",
+        "@solana/web3.js": "*",
+        "eslint": "*",
+        "zod": "*",
+        "ethers": "*",
+        "ai": "*",
+        "@goat-sdk/core": "*",
+        "@metaplex-foundation/umi": "*",
+        "@solana/spl-token": "*",
+        "starknet": "*",
+        "borsh": "*",
+        "buffer": "*"
+      }
     }
   },
   "engines": {

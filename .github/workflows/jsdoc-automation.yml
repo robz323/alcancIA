@@ -63,6 +63,11 @@ jobs:
                   version: 8
                   run_install: false
 
+            - name: Install system dependencies
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libpixman-1-dev libopus-dev
+
             - name: Update lockfile
               working-directory: scripts/jsdoc-automation
               run: |
