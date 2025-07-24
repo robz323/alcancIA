@@ -15,7 +15,7 @@ import { RpcProvider } from "starknet";
 /**
  * Enhanced extraction and validation functions for savings goals and group management
  * These functions extract relevant information from telegram messages including:
- * - Amounts (numeric values for deposits/goals) with proper validation
+ * - Amounts (numeric values for deposits/goals) with proper validation and USDC formatting
  * - Goal IDs (from patterns like "meta 1", "objetivo 2")
  * - Group IDs (from patterns like "grupo trabajo", "team vacaciones")
  * - Wallet addresses (0x format for Starknet)
@@ -25,10 +25,11 @@ import { RpcProvider } from "starknet";
  * Key improvements made:
  * ✅ Fixed date handling: Convert to Unix seconds instead of milliseconds
  * ✅ Added date validation: Must be future dates within reasonable range
- * ✅ Enhanced amount validation: Range checking and wei format conversion
+ * ✅ Enhanced amount validation: Range checking and USDC format conversion (6 decimals)
  * ✅ Better error messages with specific examples
  * ✅ Smart member extraction from wallet addresses or usernames
  * ✅ Improved ID extraction with multiple language patterns
+ * ✅ Added colloquial Spanish keywords: "alcancía", "guardadito", "compas", "amigos"
  */
 
 function extractAmount(text: string): string | null {
@@ -38,15 +39,15 @@ function extractAmount(text: string): string | null {
 
 function validateAmount(amount: string): boolean {
   const num = Number(amount);
-  return !isNaN(num) && num > 0 && num <= 1000000; // Reasonable limits
+  return !isNaN(num) && num > 0 && num <= 1000000;
 }
 
 function formatAmountForContract(amount: string): string {
-  // Convert to wei format if needed (multiply by 10^18 for ETH-like tokens)
-  // For now, keep as string but ensure it's a valid number
   const num = Number(amount);
   if (isNaN(num)) throw new Error("Invalid amount");
-  return Math.floor(num * 1e18).toString(); // Convert to wei equivalent
+  
+  const amountInUSDC = BigInt(Math.floor(num * 1e6));
+  return amountInUSDC.toString();
 }
 
 function extractGoalId(text: string): string | null {
@@ -93,7 +94,6 @@ function extractMemberUsernames(text: string): string[] {
 }
 
 function getCurrentUserWallet(runtime: IAgentRuntime, message: Memory): string {
-
   const userWallet = runtime.getSetting(`USER_WALLET_${message.userId}`);
   if (userWallet) return userWallet;
   
@@ -109,7 +109,6 @@ function extractDateAsTimestamp(text: string): number | null {
   if (isoMatch) {
     const date = new Date(isoMatch[1]);
     if (!isNaN(date.getTime())) {
-      // Convert to Unix timestamp in seconds (not milliseconds) for Starknet
       return Math.floor(date.getTime() / 1000);
     }
   }
@@ -118,7 +117,6 @@ function extractDateAsTimestamp(text: string): number | null {
     const [_, dd, mm, yyyy] = euMatch;
     const date = new Date(`${yyyy}-${mm}-${dd}`);
     if (!isNaN(date.getTime())) {
-      // Convert to Unix timestamp in seconds (not milliseconds) for Starknet
       return Math.floor(date.getTime() / 1000);
     }
   }
@@ -126,14 +124,12 @@ function extractDateAsTimestamp(text: string): number | null {
 }
 
 function validateDateFormat(dateString: string): boolean {
-  // Validate that the date is in the future and reasonable
   const timestamp = extractDateAsTimestamp(dateString);
   if (!timestamp) return false;
   
-  const now = Math.floor(Date.now() / 1000); // Current time in seconds
-  const oneYearFromNow = now + (365 * 24 * 60 * 60); // One year in seconds
+  const now = Math.floor(Date.now() / 1000);
+  const oneYearFromNow = now + (365 * 24 * 60 * 60);
   
-  // Date should be in the future but not more than 10 years away
   return timestamp > now && timestamp < (now + (10 * 365 * 24 * 60 * 60));
 }
 
@@ -208,8 +204,12 @@ export const createPersonalSavingsGoalAction: Action = {
   },
   examples: [
     [
-      { user: "{{user1}}", content: { text: "Crear ahorro meta 1000 para vacaciones antes del 2025-12-31" } },
+      { user: "{{user1}}", content: { text: "Crear alcancía meta 1000 para vacaciones antes del 2025-12-31" } },
       { user: "{{agent}}", content: { text: "🎯 ¡Meta de ahorro personal creada! Monto objetivo: 1000. Descripción: para vacaciones" } }
+    ],
+    [
+      { user: "{{user1}}", content: { text: "Nuevo guardadito objetivo 500.50 para regalo antes del 2025-06-15" } },
+      { user: "{{agent}}", content: { text: "🎯 ¡Meta de ahorro personal creada! Monto objetivo: 500.50. Descripción: para regalo" } }
     ]
   ]
 };
@@ -220,7 +220,7 @@ export const depositToPersonalSavingsAction: Action = {
   description: "Deposita fondos en una meta de ahorro personal.",
   validate: async (_runtime, message) => {
     const text = message.content?.text?.toLowerCase() || "";
-    return text.includes("depositar") && 
+    return (text.includes("depositar") || text.includes("meter")) && 
            (text.includes("ahorro") || text.includes("alcancia") || text.includes("alcancía") || text.includes("guardadito")) && 
            !text.includes("grupo");
   },
@@ -264,8 +264,12 @@ export const depositToPersonalSavingsAction: Action = {
   },
   examples: [
     [
-      { user: "{{user1}}", content: { text: "Depositar 50 en mi ahorro meta 1" } },
+      { user: "{{user1}}", content: { text: "Depositar 50 en mi alcancía meta 1" } },
       { user: "{{agent}}", content: { text: "💸 Depósito de 50 realizado en tu meta de ahorro personal (ID: 1)" } }
+    ],
+    [
+      { user: "{{user1}}", content: { text: "Meter 25.75 en mi guardadito" } },
+      { user: "{{agent}}", content: { text: "💸 Depósito de 25.75 realizado en tu meta de ahorro personal" } }
     ]
   ]
 };
@@ -291,10 +295,8 @@ export const createGroupSavingsAction: Action = {
       const groupId = Date.now().toString();
       const groupName = extractDescription(text) || `Grupo ${groupId}`;
       
-      // Extract members from wallet addresses or usernames in the message
       let members = extractWalletAddresses(text);
       
-      // If no wallet addresses found, try to extract usernames and prompt for wallets
       if (members.length === 0) {
         const usernames = extractMemberUsernames(text);
         if (usernames.length > 0) {
@@ -309,7 +311,6 @@ export const createGroupSavingsAction: Action = {
           return false;
         }
         
-        // Default fallback - include current user's wallet
         const currentUserWallet = getCurrentUserWallet(runtime, message);
         members = [currentUserWallet];
       }
@@ -333,8 +334,12 @@ export const createGroupSavingsAction: Action = {
   },
   examples: [
     [
-      { user: "{{user1}}", content: { text: "Crear grupo de ahorro para vacaciones" } },
+      { user: "{{user1}}", content: { text: "Crear alcancía con mis compas para vacaciones" } },
       { user: "{{agent}}", content: { text: "👥 ¡Grupo de ahorro creado! Nombre: para vacaciones. ID: <id>" } }
+    ],
+    [
+      { user: "{{user1}}", content: { text: "Guardadito amigos para regalo" } },
+      { user: "{{agent}}", content: { text: "👥 ¡Grupo de ahorro creado! Nombre: para regalo. ID: <id>" } }
     ]
   ]
 };
@@ -345,7 +350,7 @@ export const depositToGroupSavingsAction: Action = {
   description: "Deposita fondos en un grupo de ahorro.",
   validate: async (_runtime, message) => {
     const text = message.content?.text?.toLowerCase() || "";
-    return text.includes("depositar") && 
+    return (text.includes("depositar") || text.includes("meter")) && 
            (text.includes("grupo") || text.includes("compas") || text.includes("amigos")) &&
            (text.includes("ahorro") || text.includes("alcancia") || text.includes("alcancía") || text.includes("guardadito"));
   },
@@ -358,11 +363,10 @@ export const depositToGroupSavingsAction: Action = {
   ) => {
     try {
       const text = message.content?.text || "";
-      const groupId = extractGroupId(text) || "default"; // Extract group ID or use default
-      const member = getCurrentUserWallet(runtime, message); // Get current user's wallet
+      const groupId = extractGroupId(text) || "default";
+      const member = getCurrentUserWallet(runtime, message);
       const amount = extractAmount(text) || "0";
       
-      // Validate amount
       if (!validateAmount(amount)) {
         callback?.({
           text: `❌ Debes especificar un monto válido para depositar (entre 1 y 1,000,000). Ejemplo: 'Depositar 100 en grupo vacaciones'`,
@@ -371,7 +375,6 @@ export const depositToGroupSavingsAction: Action = {
         return false;
       }
       
-      // Validate that we have a proper wallet address
       if (member === "0x0") {
         callback?.({
           text: `❌ No se pudo obtener tu dirección de wallet. Por favor, configura tu wallet primero.`,
@@ -402,6 +405,10 @@ export const depositToGroupSavingsAction: Action = {
     [
       { user: "{{user1}}", content: { text: "Depositar 100 en grupo vacaciones" } },
       { user: "{{agent}}", content: { text: "💸 Depósito de 100 realizado en el grupo de ahorro (ID: vacaciones)" } }
+    ],
+    [
+      { user: "{{user1}}", content: { text: "Meter 50.25 alcancía compas" } },
+      { user: "{{agent}}", content: { text: "💸 Depósito de 50.25 realizado en el grupo de ahorro (ID: compas)" } }
     ]
   ]
 }; 
