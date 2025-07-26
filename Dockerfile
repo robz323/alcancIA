@@ -52,6 +52,9 @@ COPY . .
 # Skip postinstall scripts that might fail in Docker environment
 RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
 
+# Install dev dependencies for build process
+RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts --dev
+
 # Build workspace packages that are dependencies
 # Build plugins individually to handle failures gracefully
 RUN find packages -name "package.json" -path "*/plugin-*" | while read pkg; do \
