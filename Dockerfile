@@ -1,8 +1,8 @@
 # Use a specific Node.js version for better reproducibility
 FROM node:23.3.0-slim AS builder
 
-# Install pnpm globally and necessary build tools
-RUN npm install -g pnpm@9.15.4 && \
+# Install pnpm and turbo globally and necessary build tools
+RUN npm install -g pnpm@9.15.4 turbo@2.3.3 && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
