@@ -114,7 +114,7 @@
         "@elizaos/plugin-arthera": "workspace:*",
         "@elizaos/plugin-allora": "workspace:*",
         "@elizaos/plugin-opacity": "workspace:*",
-        "@elizaos/plugin-hyperliquid": "workspace:*",
+
         "@elizaos/plugin-akash": "workspace:*",
         "@elizaos/plugin-quai": "workspace:*",
         "@elizaos/plugin-lightning": "workspace:*",

@@ -49,13 +49,15 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies first (without workspace packages that need to be built)
-RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace
+# Skip postinstall scripts that might fail in Docker environment
+RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
 
 # Build workspace packages that are dependencies
 RUN pnpm run build:plugins
 
 # Now install agent dependencies (which should now find the built plugins)
-RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000
+# Skip postinstall scripts that might fail in Docker environment
+RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-scripts
 
 # Build the project
 RUN pnpm run build && pnpm prune --prod

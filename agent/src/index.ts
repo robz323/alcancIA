@@ -124,7 +124,7 @@ import { injectivePlugin } from "@elizaos/plugin-injective";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
-import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
+
 import { moralisPlugin } from "@elizaos/plugin-moralis";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
 import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener";
@@ -1214,12 +1214,7 @@ export async function createAgent(
                 ? artheraPlugin
                 : null,
             getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
-            getSecret(character, "HYPERLIQUID_PRIVATE_KEY")
-                ? hyperliquidPlugin
-                : null,
-            getSecret(character, "HYPERLIQUID_TESTNET")
-                ? hyperliquidPlugin
-                : null,
+
             getSecret(character, "AKASH_MNEMONIC") &&
             getSecret(character, "AKASH_WALLET_ADDRESS")
                 ? akashPlugin
