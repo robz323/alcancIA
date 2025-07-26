@@ -49,7 +49,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies first (without workspace packages that need to be built)
-RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --filter=!@elizaos/agent --filter=!@elizaos/client-discord
+RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace
 
 # Build workspace packages that are dependencies
 RUN pnpm run build:plugins
