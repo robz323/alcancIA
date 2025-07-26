@@ -49,13 +49,13 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies first (without workspace packages that need to be built)
-RUN pnpm install --no-frozen-lockfile --network-timeout=100000
+RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000
 
 # Build workspace packages that are dependencies
 RUN pnpm run build:plugins
 
 # Now install agent dependencies (which should now find the built plugins)
-RUN pnpm install --no-frozen-lockfile --network-timeout=100000
+RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000
 
 # Build the project
 RUN pnpm run build && pnpm prune --prod
