@@ -24,12 +24,23 @@ RUN npm install -g pnpm@9.15.4 && \
     libpango1.0-dev \
     libgif-dev \
     openssl \
-    libssl-dev libsecret-1-dev && \
+    libssl-dev \
+    libsecret-1-dev \
+    pkg-config \
+    nasm \
+    cmake \
+    libasound2-dev \
+    libpulse-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set Python 3 as the default python
 RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Set environment variables for better build compatibility
+ENV NODE_ENV=production
+ENV PYTHON=/usr/bin/python3
+ENV npm_config_python=/usr/bin/python3
 
 # Set the working directory
 WORKDIR /app
@@ -37,8 +48,14 @@ WORKDIR /app
 # Copy application code
 COPY . .
 
-# Install dependencies
-RUN pnpm install --no-frozen-lockfile
+# Install dependencies first (without workspace packages that need to be built)
+RUN pnpm install --no-frozen-lockfile --network-timeout=100000 --ignore-workspace-root-check
+
+# Build workspace packages that are dependencies
+RUN pnpm run build:plugins
+
+# Now install agent dependencies (which should now find the built plugins)
+RUN pnpm install --no-frozen-lockfile --network-timeout=100000
 
 # Build the project
 RUN pnpm run build && pnpm prune --prod
