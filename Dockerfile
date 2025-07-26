@@ -54,10 +54,12 @@ COPY . .
 
 # Install dependencies first (without workspace packages that need to be built)
 # Skip postinstall scripts that might fail in Docker environment
-RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
+# Clean any existing node_modules to avoid symlink conflicts
+RUN rm -rf node_modules && pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
 
 # Install dev dependencies for build process
-RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts --dev
+# Clean node_modules again to avoid symlink conflicts
+RUN rm -rf node_modules && pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts --dev
 
 # Build workspace packages that are dependencies
 # Build plugins individually to handle failures gracefully
