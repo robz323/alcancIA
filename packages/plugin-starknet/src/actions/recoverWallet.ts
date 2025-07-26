@@ -38,16 +38,17 @@ import {
     name: "RECOVER_INVISIBLE_WALLET_STARKNET",
     similes: [
       "RECOVER_WALLET",
-      "RECUPERAR_WALLET",
+      "RECUPERAR_ALCANCIA",
+      "RECUPERAR_ALCANCIA_DIGITAL",
+      "ACCEDER_ALCANCIA",
+      "ENTRAR_ALCANCIA",
       "RECUPERAR_CARTERA",
       "ACCEDER_WALLET",
       "LOGIN_WALLET",
-      "ENTRAR_WALLET",
-      "ACCESS_WALLET",
-      "RESTORE_WALLET",
-      "RESTAURAR_WALLET"
+      "RESTORE_DIGITAL_PIGGYBANK",
+      "ACCESS_ALCANCIA"
     ],
-    description: "Recupera una wallet invisible existente en Starknet usando email y PIN.",
+    description: "Recupera una alcancía digital existente en Starknet usando email y PIN.",
     suppressInitialMessage: true,
     validate: async (_runtime, message) => {
       const text = message.content?.text?.toLowerCase() || ""
@@ -57,10 +58,13 @@ import {
       
       // Verificar palabras clave de recuperación
       const recoverKeywords = ["recuperar", "recover", "acceder", "access", "login", "entrar", "restaurar", "restore"]
-      const walletKeywords = ["wallet", "cartera", "billetera"]
+      const piggyBankKeywords = ["alcancia", "alcancía", "wallet", "cartera", "billetera", "digital"]
       
       const hasRecoverKeyword = recoverKeywords.some(keyword => text.includes(keyword))
-      const hasWalletKeyword = walletKeywords.some(keyword => text.includes(keyword))
+      const hasPiggyBankKeyword = piggyBankKeywords.some(keyword => text.includes(keyword))
+      
+      // Detectar "alcancía digital" específicamente
+      const hasAlcanciaDigital = /alcanci[aá]\s*digital/i.test(text) || /digital\s*alcanci[aá]/i.test(text)
       
       // Validar si contiene un email
       const hasEmail = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text)
@@ -69,23 +73,24 @@ import {
       const hasPinWithKeyword = /(?:pin|contraseña|password|clave)[\s:]*\d{4,}/i.test(text)
       const hasLongNumber = /\b\d{4,}\b/.test(text)
       
-      // Activar SOLO si tiene palabras de recuperar + wallet (más específico)
-      const isWalletRecoveryRequest = hasRecoverKeyword && hasWalletKeyword
+      // Activar si tiene palabras de recuperar + (alcancía o wallet)
+      const isAlcanciaRecoveryRequest = hasRecoverKeyword && (hasPiggyBankKeyword || hasAlcanciaDigital)
       
       elizaLogger.log("RECOVER_INVISIBLE_WALLET_STARKNET validate detallado:", {
         originalText: message.content?.text || "",
         textLower: text,
         hasRecoverKeyword,
-        hasWalletKeyword, 
+        hasPiggyBankKeyword,
+        hasAlcanciaDigital,
         hasEmail,
         hasPinWithKeyword,
         hasLongNumber,
-        isWalletRecoveryRequest
+        isAlcanciaRecoveryRequest
       })
       
-      console.log("✅ RECOVER_INVISIBLE_WALLET_STARKNET validate resultado:", isWalletRecoveryRequest)
+      console.log("✅ RECOVER_INVISIBLE_WALLET_STARKNET validate resultado:", isAlcanciaRecoveryRequest)
       
-      return isWalletRecoveryRequest
+      return isAlcanciaRecoveryRequest
     },
     handler: async (
       runtime: IAgentRuntime,

@@ -101,16 +101,19 @@ Examples of {{agentName}}'s dialog and actions:
 # Capabilities
 Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
 
+# Conversation Flow Rules
+1. Only continue the conversation if the user has explicitly mentioned {{agentName}} or is directly responding to {{agentName}}'s last message
+2. Do not use the CONTINUE action unless explicitly asked to continue by the user
+3. Wait for user input before generating additional responses
+4. Keep responses focused and concise
+5. If a conversation is naturally concluding, let it end gracefully
+
 {{messageDirections}}
 
 {{recentMessages}}
 
-# Task: Generate a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
-Current Post:
-{{currentPost}}
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
+# Instructions: Write the next message for {{agentName}}. Include an action, if appropriate. {{actionNames}}
+Remember to follow the conversation flow rules above.
 ` + messageCompletionFooter;
 
 export const telegramAutoPostTemplate =

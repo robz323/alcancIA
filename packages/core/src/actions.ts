@@ -59,8 +59,18 @@ export const composeActionExamples = (actionsData: Action[], count: number) => {
  * @returns A comma-separated string of action names.
  */
 export function formatActionNames(actions: Action[]) {
+    // Priorizar acciones específicas sobre acciones genéricas
+    const priorityOrder = (action: Action) => {
+        // Acciones genéricas van al final
+        if (action.name === 'IGNORE' || action.name === 'NONE' || action.name === 'CONTINUE') {
+            return 999; // Prioridad baja
+        }
+        // Acciones específicas van primero
+        return 1; // Prioridad alta
+    };
+
     return actions
-        .sort(() => 0.5 - Math.random())
+        .sort((a, b) => priorityOrder(a) - priorityOrder(b))
         .map((action: Action) => `${action.name}`)
         .join(", ");
 }
@@ -71,8 +81,18 @@ export function formatActionNames(actions: Action[]) {
  * @returns A detailed string of actions, including names and descriptions.
  */
 export function formatActions(actions: Action[]) {
+    // Priorizar acciones específicas sobre acciones genéricas
+    const priorityOrder = (action: Action) => {
+        // Acciones genéricas van al final
+        if (action.name === 'IGNORE' || action.name === 'NONE' || action.name === 'CONTINUE') {
+            return 999; // Prioridad baja
+        }
+        // Acciones específicas van primero
+        return 1; // Prioridad alta
+    };
+
     return actions
-        .sort(() => 0.5 - Math.random())
+        .sort((a, b) => priorityOrder(a) - priorityOrder(b))
         .map((action: Action) => `${action.name}: ${action.description}`)
         .join(",\n");
 }

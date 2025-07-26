@@ -27,11 +27,45 @@ export class InvisibleWalletProvider {
   }
 
   /**
+   * Verifica si una wallet ya existe (desplegada o con balance)
+   */
+  async walletExists(email: string, pin: string): Promise<boolean> {
+    try {
+      // Generar private key determinísticamente usando email + PIN
+      const seed = this.generateDeterministicSeed(email, pin)
+      const privateKey = this.generatePrivateKeyFromSeed(seed)
+      const publicKey = ec.starkCurve.getStarkKey(privateKey)
+      
+      // Calcular la dirección de la cuenta
+      const address = this.calculateAccountAddress(publicKey)
+      
+      // Verificar si la cuenta está desplegada
+      const isDeployed = await this.isAccountDeployed(address)
+      if (isDeployed) {
+        return true
+      }
+      
+      // Si no está desplegada, verificar si tiene balance
+      const balance = await this.getBalance(address)
+      return parseFloat(balance) > 0
+    } catch (error) {
+      console.error('Error verificando existencia de wallet:', error)
+      return false
+    }
+  }
+
+  /**
    * Crea una wallet invisible usando solo email y PIN
    */
   async createInvisibleWallet(params: CreateInvisibleWalletParams): Promise<InvisibleWalletData> {
     try {
       console.log('🔧 InvisibleWalletProvider.createInvisibleWallet iniciando...')
+      
+      // Verificar si ya existe una wallet con este email + PIN
+      const exists = await this.walletExists(params.email, params.pin)
+      if (exists) {
+        throw new Error(`Ya existe una wallet con el email ${params.email} y el PIN proporcionado. Usa la función de recuperación en lugar de crear una nueva.`)
+      }
       
       // Generar private key determinísticamente usando email + PIN
       const seed = this.generateDeterministicSeed(params.email, params.pin)
@@ -50,7 +84,15 @@ export class InvisibleWalletProvider {
       // Verificar si la cuenta ya está desplegada
       const isDeployed = await this.isAccountDeployed(address)
       
+      // Si no está desplegada, verificar si tiene balance
+      let hasBalance = false
+      if (!isDeployed) {
+        const balance = await this.getBalance(address)
+        hasBalance = parseFloat(balance) > 0
+      }
+      
       console.log('🏗️ Estado de despliegue:', isDeployed ? 'Desplegada' : 'Sin desplegar')
+      console.log('💰 Tiene balance:', hasBalance ? 'Sí' : 'No')
       
       const walletData: InvisibleWalletData = {
         address,
@@ -82,8 +124,39 @@ export class InvisibleWalletProvider {
   async recoverWallet(email: string, pin: string): Promise<InvisibleWalletData> {
     console.log('🔄 Recuperando wallet para:', email)
     
-    // Usar el mismo proceso que para crear
-    return this.createInvisibleWallet({ email, pin })
+    // Generar private key determinísticamente usando email + PIN
+    const seed = this.generateDeterministicSeed(email, pin)
+    const privateKey = this.generatePrivateKeyFromSeed(seed)
+    const publicKey = ec.starkCurve.getStarkKey(privateKey)
+    
+    // Calcular la dirección de la cuenta
+    const address = this.calculateAccountAddress(publicKey)
+    
+    // Verificar si la wallet realmente existe en la blockchain
+    const isDeployed = await this.isAccountDeployed(address)
+    
+    // Si la wallet no está desplegada, verificar si tiene balance
+    let hasBalance = false
+    if (!isDeployed) {
+      const balance = await this.getBalance(address)
+      hasBalance = parseFloat(balance) > 0
+    }
+    
+    // Solo considerar como recuperación exitosa si la wallet existe o tiene balance
+    if (!isDeployed && !hasBalance) {
+      throw new Error(`No se encontró una wallet con el email ${email} y el PIN proporcionado. Verifica que el email y PIN sean correctos.`)
+    }
+    
+    const walletData: InvisibleWalletData = {
+      address,
+      privateKey: '0x' + privateKey,
+      publicKey: '0x' + publicKey,
+      email: email,
+      isDeployed
+    }
+    
+    console.log('✅ Wallet recuperada exitosamente')
+    return walletData
   }
 
   /**

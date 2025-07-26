@@ -38,18 +38,18 @@ const createInvisibleWalletAction: Action = {
   name: "CREATE_INVISIBLE_WALLET_STARKNET",
   similes: [
     "CREATE_INVISIBLE_WALLET",
-    "CREATE_SOCIAL_WALLET", 
-    "CREATE_STARKNET_WALLET",
+    "CREATE_DIGITAL_PIGGYBANK", 
+    "CREATE_ALCANCIA_DIGITAL",
+    "CREAR_ALCANCIA_DIGITAL",
+    "CREAR_ALCANCIA",
+    "CREAR_MI_ALCANCIA",
     "CREAR_WALLET_INVISIBLE",
-    "CREAR_WALLET_SOCIAL",
-    "CREAR_WALLET_STARKNET",
-    "CREAR_MI_WALLET",
     "CREAR_WALLET",
-    "CREAR_CARTERA",
-    "CREAR_MI_CARTERA",
-    "CREAR_BILLETERA"
+    "CREAR_CARTERA_DIGITAL",
+    "CREAR_BILLETERA_DIGITAL",
+    "CREATE_DIGITAL_SAVINGS"
   ],
-  description: "Crea una wallet invisible en Starknet usando solo email y PIN. No requiere extensiones ni descargas.",
+  description: "Crea una alcancía digital invisible en Starknet usando solo email y PIN. Es como una alcancía de barro pero digital y súper segura.",
   suppressInitialMessage: true,
   validate: async (_runtime, message) => {
     const text = message.content?.text?.toLowerCase() || ""
@@ -57,12 +57,15 @@ const createInvisibleWalletAction: Action = {
     console.log("🔍 CREATE_INVISIBLE_WALLET_STARKNET validate ejecutándose para:", text)
     elizaLogger.log("🔍 CREATE_INVISIBLE_WALLET_STARKNET validate ejecutándose para:", text)
     
-    // Verificar palabras clave de wallet
-    const walletKeywords = ["wallet", "cartera", "billetera"]
-    const createKeywords = ["crear", "crea", "create", "new", "nueva", "nuevo"]
+    // Verificar palabras clave de alcancía digital
+    const piggyBankKeywords = ["alcancia", "alcancía", "piggybank", "digital", "wallet", "cartera", "billetera"]
+    const createKeywords = ["crear", "crea", "create", "new", "nueva", "nuevo", "hacer"]
     
-    const hasWalletKeyword = walletKeywords.some(keyword => text.includes(keyword))
+    const hasPiggyBankKeyword = piggyBankKeywords.some(keyword => text.includes(keyword))
     const hasCreateKeyword = createKeywords.some(keyword => text.includes(keyword))
+    
+    // Detectar "alcancía digital" específicamente
+    const hasAlcanciaDigital = /alcanci[aá]\s*digital/i.test(text) || /digital\s*alcanci[aá]/i.test(text)
     
     // Validar si contiene un email
     const hasEmail = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text)
@@ -71,25 +74,27 @@ const createInvisibleWalletAction: Action = {
     const hasPinWithKeyword = /(?:pin|contraseña|password|clave)[\s:]*\d{4,}/i.test(text)
     const hasLongNumber = /\b\d{4,}\b/.test(text)
     
-    // Activar si tiene palabras de crear + wallet, O si tiene email + PIN pero NO palabras de recuperar
+    // Activar si tiene palabras de crear + alcancía, O si menciona "alcancía digital", O si tiene email + PIN pero NO palabras de recuperar
     const hasRecoverKeyword = ["recuperar", "recover", "acceder", "access", "login", "entrar", "restaurar", "restore"].some(keyword => text.includes(keyword))
-    const isWalletCreationRequest = (hasCreateKeyword && hasWalletKeyword) || 
-                                   (hasEmail && (hasPinWithKeyword || hasLongNumber) && !hasRecoverKeyword)
+    const isAlcanciaCreationRequest = hasAlcanciaDigital || 
+                                     (hasCreateKeyword && hasPiggyBankKeyword) || 
+                                     (hasEmail && (hasPinWithKeyword || hasLongNumber) && !hasRecoverKeyword)
     
     elizaLogger.log("CREATE_INVISIBLE_WALLET_STARKNET validate detallado:", {
       originalText: message.content?.text || "",
       textLower: text,
-      hasWalletKeyword,
+      hasPiggyBankKeyword,
       hasCreateKeyword, 
+      hasAlcanciaDigital,
       hasEmail,
       hasPinWithKeyword,
       hasLongNumber,
-      isWalletCreationRequest
+      isAlcanciaCreationRequest
     })
     
-    console.log("✅ CREATE_INVISIBLE_WALLET_STARKNET validate resultado:", isWalletCreationRequest)
+    console.log("✅ CREATE_INVISIBLE_WALLET_STARKNET validate resultado:", isAlcanciaCreationRequest)
     
-    return isWalletCreationRequest
+    return isAlcanciaCreationRequest
   },
   handler: async (
     runtime: IAgentRuntime,
@@ -129,7 +134,7 @@ const createInvisibleWalletAction: Action = {
       
       // Validar email
       if (!email || !email.includes("@")) {
-        const errorMsg = "❌ Por favor proporciona un correo electrónico válido para crear tu wallet invisible."
+        const errorMsg = "❌ Por favor proporciona un correo electrónico válido para crear tu alcancía digital."
         console.log(errorMsg)
         callback?.({
           text: errorMsg,
@@ -140,12 +145,12 @@ const createInvisibleWalletAction: Action = {
 
       // Validar PIN
       if (!pin) {
-        const responseMsg = `¡Perfecto compadre! Vamos a crear tu wallet invisible con ${email} 🎯 
+        const responseMsg = `¡Perfecto compadre! Vamos a crear tu alcancía digital con ${email} 🏦 
         
 Ahora necesito que escribas tu PIN de seguridad (mínimo 4 dígitos):
 "PIN 1234" 
 
-¡Tu wallet será única e invisible para el mundo! 🥷 #WalletInvisible`
+¡Tu alcancía será única e invisible para el mundo! 🥷 #AlcanciaDigital`
         console.log("⏳", responseMsg)
         callback?.({
           text: responseMsg,
@@ -164,9 +169,9 @@ Ahora necesito que escribas tu PIN de seguridad (mínimo 4 dígitos):
         return false
       }
 
-      console.log(`✅ Iniciando creación de wallet invisible para ${email}`)
+      console.log(`✅ Iniciando creación de alcancía digital para ${email}`)
       
-      // Crear el provider y la wallet
+      // Crear el provider y la alcancía digital
       const walletProvider = new InvisibleWalletProvider(starknetRpcUrl)
       const walletData = await walletProvider.createInvisibleWallet({
         email,
@@ -174,28 +179,24 @@ Ahora necesito que escribas tu PIN de seguridad (mínimo 4 dígitos):
         rpcUrl: starknetRpcUrl
       })
 
-      // Obtener balance (será 0 para una wallet nueva)
+      // Obtener balance (será 0 para una alcancía nueva)
       const balance = await walletProvider.getBalance(walletData.address)
 
-      console.log("🎉 Wallet invisible creada exitosamente!")
-      elizaLogger.log("Wallet invisible creada:", {
+      console.log("🎉 Alcancía digital creada exitosamente!")
+      elizaLogger.log("Alcancía digital creada:", {
         address: walletData.address,
         email: walletData.email,
         isDeployed: walletData.isDeployed
       })
 
-      const successMsg = `¡Excelente compadre! Tu wallet invisible ha sido creada 🥷✨
+      const successMsg = `¡Excelente compadre! Tu alcancía digital ha sido creada 🏦✨
 
-📧 **Email**: ${email}
-📍 **Dirección Completa**: 
-\`${walletData.address}\`
-💰 **Balance**: ${balance} ETH
-🏗️ **Estado**: ${walletData.isDeployed ? 'Desplegada' : 'Lista para usar'}
+Tu alcancía está lista para recibir tus ahorros y se activará automáticamente en tu primer depósito.
 
-${!walletData.isDeployed ? '⚡ Tu wallet se desplegará automáticamente en tu primera transacción' : ''}
+¡Tu alcancía digital está más segura que el tesoro de un pirata! 🏴‍☠️ 
+Solo tú puedes acceder con tu email y PIN 🔐
 
-¡Tu wallet está más segura que el tesoro de un pirata! 🏴‍☠️ 
-Solo tú puedes acceder con tu email y PIN 🔐 #WalletInvisible`
+¡Ahora ya puedes empezar a ahorrar como todo un campeón! �� #AlcanciaDigital`
 
       callback?.({
         text: successMsg,
