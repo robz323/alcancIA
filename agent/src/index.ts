@@ -149,7 +149,7 @@ import { emailAutomationPlugin } from "@elizaos/plugin-email-automation";
 import { seiPlugin } from "@elizaos/plugin-sei";
 import { sunoPlugin } from "@elizaos/plugin-suno";
 import { udioPlugin } from "@elizaos/plugin-udio";
-import { imgflipPlugin } from "@elizaos/plugin-imgflip";
+
 import { ethstoragePlugin } from "@elizaos/plugin-ethstorage";
 import { zerionPlugin } from "@elizaos/plugin-zerion";
 import { minaPlugin } from "@elizaos/plugin-mina";
@@ -1263,10 +1263,7 @@ export async function createAgent(
                 : null,
             getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
             getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null,
-            getSecret(character, "IMGFLIP_USERNAME") &&
-            getSecret(character, "IMGFLIP_PASSWORD")
-                ? imgflipPlugin
-                : null,
+
             getSecret(character, "FUNDING_PRIVATE_KEY") &&
             getSecret(character, "EVM_RPC_URL")
                 ? litPlugin
