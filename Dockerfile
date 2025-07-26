@@ -30,7 +30,11 @@ RUN npm install -g pnpm@9.15.4 turbo@2.3.3 && \
     nasm \
     cmake \
     libasound2-dev \
-    libpulse-dev && \
+    libpulse-dev \
+    m4 \
+    libgmp-dev \
+    libmpfr-dev \
+    libmpc-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
