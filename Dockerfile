@@ -49,7 +49,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies first (without workspace packages that need to be built)
-RUN pnpm install --no-frozen-lockfile --network-timeout=100000 --ignore-workspace-root-check
+RUN pnpm install --no-frozen-lockfile --network-timeout=100000
 
 # Build workspace packages that are dependencies
 RUN pnpm run build:plugins
