@@ -7,7 +7,8 @@
         "@elizaos/agent#check-types": {
             "dependsOn": [
                 "@elizaos/plugin-solana#build",
-                "@elizaos/plugin-direct#build"
+                "@elizaos/plugin-direct#build",
+                "@elizaos/plugin-capa#build"
             ]
         },
         "build": {
@@ -60,6 +61,10 @@
         "@elizaos/plugin-lightning#build": {
             "outputs": ["dist/**"],
             "dependsOn": ["@elizaos/plugin-tee#build"]
+        },
+        "@elizaos/plugin-capa#build": {
+            "outputs": ["dist/**"],
+            "dependsOn": ["@elizaos/plugin-starknet#build"]
         },
         "eliza-docs#build": {
             "outputs": ["build/**"]
