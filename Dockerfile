@@ -55,11 +55,11 @@ COPY . .
 # Install dependencies first (without workspace packages that need to be built)
 # Skip postinstall scripts that might fail in Docker environment
 # Clean any existing node_modules to avoid symlink conflicts
-RUN rm -rf node_modules && pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
+RUN rm -rf node_modules && pnpm install --frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
 
 # Install dev dependencies for build process
 # Clean node_modules again to avoid symlink conflicts
-RUN rm -rf node_modules && pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts --dev
+RUN rm -rf node_modules && pnpm install --frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts --dev
 
 # Build workspace packages that are dependencies
 # Build plugins individually to handle failures gracefully
@@ -72,7 +72,7 @@ done
 
 # Now install agent dependencies (which should now find the built plugins)
 # Skip postinstall scripts that might fail in Docker environment
-RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-scripts
+RUN pnpm install --frozen-lockfile --fetch-timeout=100000 --ignore-scripts
 
 # Build the project
 RUN pnpm run build && pnpm prune --prod
