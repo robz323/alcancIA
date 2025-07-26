@@ -5,7 +5,7 @@ import { RedisClient } from "@elizaos/adapter-redis";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
 import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 import { AutoClientInterface } from "@elizaos/client-auto";
-import { DiscordClientInterface } from "@elizaos/client-discord";
+
 import { InstagramClientInterface } from "@elizaos/client-instagram";
 import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
@@ -160,7 +160,8 @@ import { quickIntelPlugin } from "@elizaos/plugin-quick-intel";
 
 import { trikonPlugin } from "@elizaos/plugin-trikon";
 import arbitragePlugin from "@elizaos/plugin-arbitrage";
-import { tokenManagerPlugin } from "@elizaos/plugin-token-manager"
+import { tokenManagerPlugin } from "@elizaos/plugin-token-manager";
+import { capaPlugin } from "@elizaos/plugin-capa";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -814,10 +815,7 @@ export async function initializeClients(
         if (xmtpClient) clients.xmtp = xmtpClient;
     }
 
-    if (clientTypes.includes(Clients.DISCORD)) {
-        const discordClient = await DiscordClientInterface.start(runtime);
-        if (discordClient) clients.discord = discordClient;
-    }
+
 
     if (clientTypes.includes(Clients.TELEGRAM)) {
         const telegramClient = await TelegramClientInterface.start(runtime);
@@ -1308,6 +1306,8 @@ export async function createAgent(
                 ? deskExchangePlugin
                 : null,
             getSecret(character, "EVM_PRIVATE_KEY") ? tokenManagerPlugin : null,
+            getSecret(character, "CAPA_API_KEY") && 
+            getSecret(character, "CAPA_WEBHOOK_SECRET") ? capaPlugin : null,
         ]
             .flat()
             .filter(Boolean),
