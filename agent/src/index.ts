@@ -161,7 +161,7 @@ import { quickIntelPlugin } from "@elizaos/plugin-quick-intel";
 import { trikonPlugin } from "@elizaos/plugin-trikon";
 import arbitragePlugin from "@elizaos/plugin-arbitrage";
 import { tokenManagerPlugin } from "@elizaos/plugin-token-manager";
-import { capaPlugin } from "@elizaos/plugin-capa";
+
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -1307,7 +1307,7 @@ export async function createAgent(
                 : null,
             getSecret(character, "EVM_PRIVATE_KEY") ? tokenManagerPlugin : null,
             getSecret(character, "CAPA_API_KEY") && 
-            getSecret(character, "CAPA_WEBHOOK_SECRET") ? capaPlugin : null,
+            null, // capaPlugin temporarily removed
         ]
             .flat()
             .filter(Boolean),

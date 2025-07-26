@@ -47,7 +47,7 @@
         "@elizaos/plugin-avail": "workspace:*",
         "@elizaos/plugin-bnb": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
-        "@elizaos/plugin-capa": "workspace:*",
+
         "@elizaos/plugin-di": "workspace:*",
         "@elizaos/plugin-intiface": "workspace:*",
         "@elizaos/plugin-coinbase": "workspace:*",
