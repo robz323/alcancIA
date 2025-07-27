@@ -1098,6 +1098,12 @@ export class MessageManager {
                 ? message.caption
                 : "";
 
+        // Handle /start command for new users
+        if (messageText === "/start") {
+            await this._handleStartCommand(ctx);
+            return;
+        }
+
         // Add team handling at the start
         if (
             this.runtime.character.clientConfig?.telegram?.isPartOfTeam &&
@@ -1421,6 +1427,37 @@ export class MessageManager {
         } catch (error) {
             elizaLogger.error("❌ Error handling message:", error);
             elizaLogger.error("Error sending message:", error);
+        }
+    }
+
+    private async _handleStartCommand(ctx: Context): Promise<void> {
+        try {
+            const welcomeMessage = `¡Hola! 👋 Soy Don Jaimito, tu asistente personal para el ahorro.
+
+🎯 **AlcancIA** es un agente que te puede ayudar a:
+• Crear estrategias de ahorro personalizadas
+• Crear una alcancía digital
+• Ahorrar de manera individual o grupal
+• Gestionar tus finanzas de forma inteligente
+
+💡 ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre:
+• Cómo crear un plan de ahorro
+• Estrategias para ahorrar más dinero
+• Consejos financieros personalizados
+• Y mucho más...
+
+¡Comencemos a trabajar en tus metas financieras! 💰`;
+
+            await ctx.reply(welcomeMessage, { parse_mode: "Markdown" });
+            elizaLogger.log("✅ Welcome message sent for /start command");
+        } catch (error) {
+            elizaLogger.error("❌ Error sending welcome message:", error);
+            // Fallback to simple message if markdown fails
+            try {
+                await ctx.reply("¡Hola! Soy Don Jaimito, tu asistente para el ahorro. ¿En qué puedo ayudarte?");
+            } catch (fallbackError) {
+                elizaLogger.error("❌ Error sending fallback welcome message:", fallbackError);
+            }
         }
     }
 }

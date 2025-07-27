@@ -9,12 +9,12 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, envDir, "");
     return {
         plugins: [
-            react(),
+            react() as any,
             viteCompression({
                 algorithm: "brotliCompress",
                 ext: ".br",
                 threshold: 1024,
-            }),
+            }) as any,
         ],
         clearScreen: false,
         envDir,
