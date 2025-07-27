@@ -55,7 +55,8 @@ COPY . .
 # Install dependencies first (without workspace packages that need to be built)
 # Skip postinstall scripts that might fail in Docker environment
 # Clean any existing node_modules to avoid symlink conflicts
-RUN rm -rf node_modules && pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
+# Remove lockfile to force regeneration
+RUN rm -rf node_modules pnpm-lock.yaml && pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-workspace --ignore-scripts
 
 # Install dev dependencies for build process
 # Clean node_modules again to avoid symlink conflicts
