@@ -65,10 +65,16 @@ RUN rm -rf node_modules && pnpm install --no-frozen-lockfile --fetch-timeout=100
 
 # Build workspace packages that are dependencies
 # Build plugins individually to handle failures gracefully
+# Skip problematic plugins like plugin-node that have complex dependencies
 RUN find packages -name "package.json" -path "*/plugin-*" | while read pkg; do \
     dir=$(dirname "$pkg"); \
     echo "Building plugin in $dir"; \
-    cd "$dir" && pnpm run build || echo "Failed to build $dir, continuing..."; \
+    cd "$dir" && \
+    if [ "$(basename "$dir")" = "plugin-node" ]; then \
+        echo "Skipping plugin-node due to complex dependencies"; \
+    else \
+        pnpm run build || echo "Failed to build $dir, continuing..."; \
+    fi; \
     cd /app; \
 done
 
@@ -78,7 +84,7 @@ RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-scripts
 
 # Build the project
 # Skip create-eliza-app if it fails due to missing dev dependencies
-RUN pnpm run build --filter=!create-eliza-app && pnpm prune --prod || echo "Some packages failed to build, continuing..."
+RUN pnpm run build --filter=!create-eliza-app --filter=!@elizaos/plugin-node && pnpm prune --prod || echo "Some packages failed to build, continuing..."
 
 # Final runtime image
 FROM node:23.3.0-slim
