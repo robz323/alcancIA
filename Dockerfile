@@ -84,7 +84,10 @@ RUN pnpm install --no-frozen-lockfile --fetch-timeout=100000 --ignore-scripts
 
 # Build the project
 # Skip create-eliza-app if it fails due to missing dev dependencies
-RUN pnpm run build --filter=!create-eliza-app --filter=!@elizaos/plugin-node && pnpm prune --prod || echo "Some packages failed to build, continuing..."
+# Ensure client build has proper permissions and directories
+RUN chmod +x client/version.sh && \
+    mkdir -p client/src/lib && \
+    pnpm run build --filter=!create-eliza-app --filter=!@elizaos/plugin-node && pnpm prune --prod || echo "Some packages failed to build, continuing..."
 
 # Final runtime image
 FROM node:23.3.0-slim
