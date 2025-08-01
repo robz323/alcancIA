@@ -61,8 +61,19 @@ const createInvisibleWalletAction: Action = {
     const piggyBankKeywords = ["alcancia", "alcancía", "piggybank", "digital", "wallet", "cartera", "billetera"]
     const createKeywords = ["crear", "crea", "create", "new", "nueva", "nuevo", "hacer"]
     
+    // NUEVO: Detectar palabras clave de depósito/transacción que NO deberían crear wallet
+    const depositKeywords = ["depositar", "deposit", "enviar", "send", "transferir", "transfer", "mandar", "pagar", "pay", "fondear", "agregar", "añadir"]
+    const transactionKeywords = ["transacción", "transaction", "operación", "operation", "movimiento", "movement"]
+    const investmentKeywords = ["invertir", "inversión", "comprar", "buy", "adquirir"]
+    
     const hasPiggyBankKeyword = piggyBankKeywords.some(keyword => text.includes(keyword))
     const hasCreateKeyword = createKeywords.some(keyword => text.includes(keyword))
+    
+    // NUEVO: Detectar si el mensaje es sobre depósito/transacción/inversión
+    const hasDepositKeyword = depositKeywords.some(keyword => text.includes(keyword))
+    const hasTransactionKeyword = transactionKeywords.some(keyword => text.includes(keyword))
+    const hasInvestmentKeyword = investmentKeywords.some(keyword => text.includes(keyword))
+    const isDepositOrTransactionOrInvestment = hasDepositKeyword || hasTransactionKeyword || hasInvestmentKeyword
     
     // Detectar "alcancía digital" específicamente
     const hasAlcanciaDigital = /alcanci[aá]\s*digital/i.test(text) || /digital\s*alcanci[aá]/i.test(text)
@@ -74,11 +85,14 @@ const createInvisibleWalletAction: Action = {
     const hasPinWithKeyword = /(?:pin|contraseña|password|clave)[\s:]*\d{4,}/i.test(text)
     const hasLongNumber = /\b\d{4,}\b/.test(text)
     
-    // Activar si tiene palabras de crear + alcancía, O si menciona "alcancía digital", O si tiene email + PIN pero NO palabras de recuperar
+    // NUEVO: Detectar palabras de recuperar
     const hasRecoverKeyword = ["recuperar", "recover", "acceder", "access", "login", "entrar", "restaurar", "restore"].some(keyword => text.includes(keyword))
-    const isAlcanciaCreationRequest = hasAlcanciaDigital || 
-                                     (hasCreateKeyword && hasPiggyBankKeyword) || 
-                                     (hasEmail && (hasPinWithKeyword || hasLongNumber) && !hasRecoverKeyword)
+    
+    // MEJORADO: Activar SOLO si es claramente una solicitud de creación Y NO es un depósito/transacción/inversión
+    const isAlcanciaCreationRequest = (hasAlcanciaDigital || 
+                                     (hasCreateKeyword && hasPiggyBankKeyword)) && 
+                                     !isDepositOrTransactionOrInvestment && 
+                                     !hasRecoverKeyword
     
     elizaLogger.log("CREATE_INVISIBLE_WALLET_STARKNET validate detallado:", {
       originalText: message.content?.text || "",
@@ -89,6 +103,11 @@ const createInvisibleWalletAction: Action = {
       hasEmail,
       hasPinWithKeyword,
       hasLongNumber,
+      hasDepositKeyword,
+      hasTransactionKeyword,
+      hasInvestmentKeyword,
+      isDepositOrTransactionOrInvestment,
+      hasRecoverKeyword,
       isAlcanciaCreationRequest
     })
     
@@ -196,7 +215,7 @@ Tu alcancía está lista para recibir tus ahorros y se activará automáticament
 ¡Tu alcancía digital está más segura que el tesoro de un pirata! 🏴‍☠️ 
 Solo tú puedes acceder con tu email y PIN 🔐
 
-¡Ahora ya puedes empezar a ahorrar como todo un campeón! �� #AlcanciaDigital`
+¡Ahora ya puedes empezar a ahorrar como todo un campeón! 🥇 #AlcanciaDigital`
 
       callback?.({
         text: successMsg,

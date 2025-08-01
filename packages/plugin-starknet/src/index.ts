@@ -1,6 +1,5 @@
 import type { Plugin } from "@elizaos/core";
 import { executeSwap } from "./actions/swap";
-import transfer from "./actions/transfer";
 import { deployToken } from "./actions/unruggable";
 import transferSubdomain from "./actions/subdomain";
 import createWalletAction from "./actions/createWallet";
@@ -29,7 +28,6 @@ export const starknetPlugin: Plugin = {
         // createWalletAction, // Temporalmente desactivado por error en ChipiPay SDK
         createInvisibleWalletAction, 
         recoverWalletAction, 
-        transfer, 
         executeSwap, 
         deployToken, 
         transferSubdomain

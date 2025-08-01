@@ -1,6 +1,6 @@
 {
     "name": "DonJaimito",
-    "plugins": ["@elizaos/plugin-starknet"],
+    "plugins": ["@elizaos/plugin-starknet", "@elizaos/plugin-capa"],
     "clients": ["telegram"],
     "modelProvider": "anthropic",
     "settings": {

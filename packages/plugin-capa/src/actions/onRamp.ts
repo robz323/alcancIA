@@ -14,37 +14,33 @@ export interface CreateOnRampContent extends Content {
   amount?: string
   email?: string
   currency?: string
-  cryptoCurrency?: string
+  // cryptoCurrency siempre será USDC
 }
 
-// Función auxiliar para extraer email del texto
+// Función auxiliar para extraer el correo del texto
 function extractEmail(text: string): string | null {
   const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
   const match = text.match(emailRegex)
   return match ? match[0] : null
 }
 
-// Función auxiliar para extraer cantidad del texto
+// Función auxiliar para extraer el monto del texto
 function extractAmount(text: string): number | null {
-  const amountRegex = /(\d+(?:\.\d+)?)\s*(?:peso|pesos|mxn|dop|dolar|dolares|usd)/i
+  // Buscar patrones como "depositar 1000", "enviar 500", etc.
+  const amountRegex = /(\d+(?:\.\d+)?)\s*(pesos?|dolares?|dólares?|usd|mxn|euros?|eur)/i
   const match = text.match(amountRegex)
-  return match ? parseFloat(match[1]) : null
-}
-
-// Función auxiliar para detectar moneda fiat
-function detectFiatCurrency(text: string): string {
-  if (text.includes('peso') || text.includes('pesos') || text.includes('mxn')) return 'MXN'
-  if (text.includes('dop')) return 'DOP'
-  if (text.includes('dolar') || text.includes('dolares') || text.includes('usd')) return 'USD'
-  return 'MXN' // Default
-}
-
-// Función auxiliar para detectar criptomoneda objetivo
-function detectCryptoCurrency(text: string): string {
-  if (text.includes('btc') || text.includes('bitcoin')) return 'BTC'
-  if (text.includes('eth') || text.includes('ethereum')) return 'ETH'
-  if (text.includes('usdt')) return 'USDT'
-  return 'USDC' // Default
+  if (match) {
+    return parseFloat(match[1])
+  }
+  
+  // Buscar números sueltos (mínimo 2 dígitos)
+  const numberRegex = /\b(\d{2,})\b/
+  const numberMatch = text.match(numberRegex)
+  if (numberMatch) {
+    return parseInt(numberMatch[1])
+  }
+  
+  return null
 }
 
 // OnRamp action for Capa plugin
@@ -65,15 +61,27 @@ export const onRampAction: Action = {
       
       const text = message.content.text.toLowerCase();
       
-      // SOLO detectar inversión directa con email y cantidad - NO estrategias de ahorro
-      const hasInvestKeyword = /\b(invertir|inversion|inversión|comprar|fondear|agregar dinero|añadir dinero)\b/i.test(text);
-      const hasEmail = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text);
-      const hasAmount = /\b\d+\s*(pesos?|dolares?|dólares?|usd|mxn|euros?|eur)\b/i.test(text) || 
+      // MEJORADO: Detectar palabras clave de depósito/inversión
+      const depositKeywords = /\b(depositar|deposit|fondear|agregar|añadir|invertir|inversion|inversión|comprar|buy|ahorrar|save)\b/i;
+      const alcanciaKeywords = /\b(alcancia|alcancía|wallet|cartera|billetera|digital)\b/i;
+      const emailKeywords = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+      
+      const hasDepositKeyword = depositKeywords.test(text);
+      const hasAlcanciaKeyword = alcanciaKeywords.test(text);
+      const hasAmount = /\b\d+\s*(?:pesos?|dolares?|dólares?|usd|mxn|euros?|eur)\b/i.test(text) || 
                        /\$\d+|\d+\$/.test(text) ||
                        /\b\d{2,}\b/.test(text);
+      const hasEmail = emailKeywords.test(text);
+      
+      // SOLO detectar inversión directa con email y cantidad - NO estrategias de ahorro
+      const hasInvestKeyword = /\b(invertir|inversion|inversión|comprar|fondear|agregar dinero|añadir dinero|ahorrar|save|depositar|deposit)\b/i.test(text);
+      const hasEmail2 = /@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text);
+      const hasAmount2 = /\b\d+\s*(?:pesos?|dolares?|dólares?|usd|mxn|euros?|eur)\b/i.test(text) || 
+                        /\$\d+|\d+\$/.test(text) ||
+                        /\b\d{2,}\b/.test(text);
       
       // Solo activar si tiene TODAS las keywords necesarias para inversión directa
-      const isDirectInvestment = hasInvestKeyword && hasEmail && hasAmount;
+      const isDirectInvestment = hasInvestKeyword && hasEmail2 && hasAmount2;
       
       console.log("CAPA_ON_RAMP validate detallado:", {
           originalText: message.content.text,
@@ -100,13 +108,13 @@ export const onRampAction: Action = {
     let email: string | null = null;
     let amount: number | null = null;
     let fiatCurrency = 'MXN';
-    let cryptoCurrency = 'USDC';
+    const cryptoCurrency = 'USDC'; // USDC fijo como token por defecto
     
     try {
       const text = message.content.text;
       
       // SOLO procesar fondeo directo - no estrategias
-      console.log("💰 Procesando fondeo directo de alcancía digital...");
+      console.log("💰 Procesando fondeo directo de alcancía digital con USDC...");
       
       // Extraer información de inversión directa
       email = extractEmail(text);
@@ -130,13 +138,13 @@ export const onRampAction: Action = {
         return false;
       }
       
-      // Detectar moneda
+      // Detectar moneda fiat (MXN por defecto, USD si se especifica)
       const lowerText = text.toLowerCase();
       if (lowerText.includes('dolar') || lowerText.includes('usd') || lowerText.includes('$')) {
         fiatCurrency = 'USD';
       }
       
-      console.log(`✅ Fondeo confirmado: ${amount} ${fiatCurrency} para ${email}`);
+      console.log(`✅ Fondeo confirmado: ${amount} ${fiatCurrency} para ${email} - Token: ${cryptoCurrency}`);
       
       // Procesar el fondeo usando la API de Capa
       const capaApiKey = runtime.getSetting("CAPA_API_KEY") || process.env.CAPA_API_KEY;
